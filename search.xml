@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Jenkins如何自动化部署前端项目(安装Jenkins)</title>
+    <url>/2023/08/01/jenkins/</url>
+    <content><![CDATA[<h3 id="Jenkins如何自动化部署前端项目"><a href="#Jenkins如何自动化部署前端项目" class="headerlink" title="Jenkins如何自动化部署前端项目"></a>Jenkins如何自动化部署前端项目</h3><p> 首先你需要在你的云服务器上安装java环境以及maven才能继续安装Jenkins</p>
+<h4 id="1、安装JDK"><a href="#1、安装JDK" class="headerlink" title="1、安装JDK"></a>1、安装JDK</h4><p> 通过yum安装的默认路径为： <code>usr/lib/jvm</code></p>
+<p>安装命令：<code>yum -y install java-1.8.0-openjdk*</code></p>
+<p>在 <code>usr/lib/jvm</code> 文件最后加入以下代码配置环境变量</p>
+<figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line">cat&gt;&gt; /etc/profile &lt;&lt;EOF</span><br><span class="line">############################## ↓↓↓↓↓↓ <span class="built_in">set</span> java environment ↓↓↓↓↓↓ #############################</span><br><span class="line">JAVA_HOME=/usr/lib/jvm/java</span><br><span class="line">CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/jre/lib/rt.jar</span><br><span class="line"><span class="built_in">PATH</span>=$<span class="built_in">PATH</span>:$JAVA_HOME/bin</span><br><span class="line">export JAVA_HOME CLASSPATH <span class="built_in">PATH</span></span><br><span class="line">###############################################################################################</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<h6 id="查看环境变量"><a href="#查看环境变量" class="headerlink" title="查看环境变量"></a>查看环境变量</h6> <figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line"><span class="built_in">echo</span> $JAVA_HOME</span><br><span class="line"><span class="built_in">echo</span> $<span class="built_in">PATH</span></span><br></pre></td></tr></table></figure>
+<h6 id="验证Java是否安装成功"><a href="#验证Java是否安装成功" class="headerlink" title="验证Java是否安装成功"></a>验证Java是否安装成功</h6> <figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line">java</span><br><span class="line">javac</span><br><span class="line">java -version</span><br></pre></td></tr></table></figure>
+
+<h6 id="卸载Jdk"><a href="#卸载Jdk" class="headerlink" title="卸载Jdk"></a>卸载Jdk</h6> <figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line"># 查看CentOS自带JDK是否已安装:</span><br><span class="line">yum list installed | grep java</span><br><span class="line"># 如果存在自带的jdk，删除自带的jdk</span><br><span class="line">yum -y remove java-<span class="number">1</span>.<span class="number">8</span>.<span class="number">0</span>-openjdk*</span><br><span class="line">yum -y remove tzdata-java.noarch</span><br></pre></td></tr></table></figure>
+
+<h4 id="2、安装maven"><a href="#2、安装maven" class="headerlink" title="2、安装maven"></a>2、安装maven</h4><figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line"># 安装yum配置工具</span><br><span class="line">yum install -y yum-utils</span><br><span class="line"># 使用配置工具配置第三方epel源仓库</span><br><span class="line">yum-config-manager --add-repo http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo</span><br><span class="line">yum-config-manager --enable epel-apache-maven</span><br><span class="line"># 安装maven</span><br><span class="line">yum install -y apache-maven</span><br></pre></td></tr></table></figure>
+
+<h6 id="配置环境变量"><a href="#配置环境变量" class="headerlink" title="配置环境变量"></a>配置环境变量</h6><p>在 <code>/etc/profile</code> 文件最后加入</p>
+<figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line">############################## ↓↓↓↓↓↓ <span class="built_in">set</span> maven environment ↓↓↓↓↓↓ #############################</span><br><span class="line">MAVEN_HOME=/home/soft/maven/apache-maven-<span class="number">3</span>.<span class="number">8</span>.<span class="number">8</span></span><br><span class="line"><span class="built_in">PATH</span>=$<span class="built_in">PATH</span>:$JAVA_HOME/bin:$MAVEN_HOME/bin</span><br><span class="line">export MAVEN_HOME <span class="built_in">PATH</span></span><br><span class="line">################################################################################################</span><br></pre></td></tr></table></figure>
+
+<h6 id="验证-mvn-v"><a href="#验证-mvn-v" class="headerlink" title="验证   mvn -v"></a>验证   <code>mvn -v</code></h6><h6 id="maven配置"><a href="#maven配置" class="headerlink" title="maven配置"></a>maven配置</h6><p>在<code>/home/soft/maven/apache-maven-3.8.8/conf/settings.xml</code>文件中</p>
+<h6 id="配置仓库信息如下："><a href="#配置仓库信息如下：" class="headerlink" title="配置仓库信息如下："></a>配置仓库信息如下：</h6><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- /home/soft/maven/apache-maven-3.8.8/conf/settings.xml --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">localRepository</span>&gt;</span>/home/soft/maven/repository<span class="tag">&lt;/<span class="name">localRepository</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h5 id="配置阿里中央仓库"><a href="#配置阿里中央仓库" class="headerlink" title="配置阿里中央仓库"></a>配置阿里中央仓库</h5><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- /home/soft/maven/apache-maven-3.8.8/conf/settings.xml --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">mirrors</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- 国内中央仓库的配置-阿里云中央仓库 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">mirror</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>nexus-aliyun<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">mirrorOf</span>&gt;</span>central<span class="tag">&lt;/<span class="name">mirrorOf</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">name</span>&gt;</span>Nexus aliyun<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>http://maven.aliyun.com/nexus/content/groups/public<span class="tag">&lt;/<span class="name">url</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">mirror</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mirrors</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h5 id="以上操作完成并成功既可安装Jenkins（注意安装版本，我演示的版本为jdk8-最新版不支持jdk8）"><a href="#以上操作完成并成功既可安装Jenkins（注意安装版本，我演示的版本为jdk8-最新版不支持jdk8）" class="headerlink" title="以上操作完成并成功既可安装Jenkins（注意安装版本，我演示的版本为jdk8,最新版不支持jdk8）"></a>以上操作完成并成功既可安装Jenkins（注意安装版本，我演示的版本为jdk8,最新版不支持jdk8）</h5><p>下载旧版本Jenkins</p>
+<figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/jenkins/redhat-stable/jenkins-<span class="number">2</span>.<span class="number">346</span>.<span class="number">3</span>-<span class="number">1</span>.<span class="number">1</span>.noarch.rpm</span><br></pre></td></tr></table></figure>
+<p>安装下载rpm包</p>
+<figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line">yum -y install jenkins-<span class="number">2</span>.<span class="number">346</span>.<span class="number">3</span>-<span class="number">1</span>.<span class="number">1</span>.noarch.rpm</span><br></pre></td></tr></table></figure>
+<p>查看Jenkins状态</p>
+<figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line">systemctl status jenkins</span><br></pre></td></tr></table></figure>
+<p>如下：<br><img src="/img/demo.png" alt="图"></p>
+]]></content>
+      <tags>
+        <tag>运维</tag>
+        <tag>前端</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jenkins如何自动化部署前端项目(2)</title>
+    <url>/2023/08/01/jenkins2/</url>
+    <content><![CDATA[<h3 id="Jenkins如何自动化部署前端项目"><a href="#Jenkins如何自动化部署前端项目" class="headerlink" title="Jenkins如何自动化部署前端项目"></a>Jenkins如何自动化部署前端项目</h3><p> 前置步骤我们都操作完了，这篇开始介绍jenkins的是哟。话不多说，看操作(没安装的请看我主页有详细的安装教程)</p>
+<p>1、登录进入jenkins后会让你选择安装插件，选择第一个默认的就行。</p>
+<p>2、配置JDK和Git都需要执行路径，所以需要先把执行路径找到，先进入服务器的终端界面执行</p>
+<blockquote>
+<p>JDK的路径</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">echo $JAVA_HOME</span><br></pre></td></tr></table></figure>
+<p><img src="/img/j/1.png" alt="jdk路径"></p>
+<blockquote>
+<p>Git的路径</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">which git</span><br></pre></td></tr></table></figure>
+<p><img src="/img/j/2.png" alt="git路径"></p>
+<p>3、先配置JDK和Git。点击：Manage Jenkins&gt;&gt;Global Tool Configuration</p>
+<p><img src="/img/j/3.png"></p>
+<p><img src="/img/j/4.png"></p>
+<p>选择JDK，别名随便填，JAVA_HOME填写查询到jdk的路径</p>
+<p><img src="/img/j/5.png"></p>
+<p>选择Git，Name随便填e填写2.2查询到git的路径，配置完成后点击应用，在点击保存。</p>
+<p><img src="/img/j/6.png"></p>
+<h3 id="安装插件"><a href="#安装插件" class="headerlink" title="安装插件"></a>安装插件</h3><p>安装插件，点击Manage Jenkins&gt;&gt;Manage Plugins，点击可选插件</p>
+<p><img src="/img/j/7.png"></p>
+<p><img src="/img/j/8.png"></p>
+<p>安装 Gitee 插件，找到可选插件tab，搜索gitee<br><img src="/img/j/9.png"></p>
+<p>安装 Maven 插件<br><img src="/img/j/10.png"></p>
+<p>安装 Git Parameter Plug-In 插件，用于添加git参数<br><img src="/img/j/11.png"></p>
+<p>安装 Environment Injector 插件，搜索 inject，此插件可以在shell脚本中可以使用 $a、$b等自定义环境变量<br><img src="/img/j/12.png"></p>
+<p>安装 Publish over SSH 插件<br><img src="/img/j/13.png"></p>
+<h3 id="添加Gitee配置（Manage-Jenkins-Configure-System-Gitee-配置）"><a href="#添加Gitee配置（Manage-Jenkins-Configure-System-Gitee-配置）" class="headerlink" title="添加Gitee配置（Manage Jenkins&gt;&gt;Configure System&gt;&gt;Gitee 配置）"></a>添加Gitee配置（Manage Jenkins&gt;&gt;Configure System&gt;&gt;Gitee 配置）</h3><p><img src="/img/j/14.png"></p>
+<p><img src="/img/j/15.png"></p>
+<p><img src="/img/j/16.png"></p>
+<p><img src="/img/j/17.png"><br><img src="/img/j/18.png"><br><img src="/img/j/19.png"><br><img src="/img/j/20.png"><br><img src="/img/j/21.png"><br>可根据自己需要更改(记得安装Node哦)</p>
+<figure class="highlight cmd"><table><tr><td class="code"><pre><span class="line"># 在执行过程中若遇到使用了未定义的变量或命令返回值为非零，将直接报错退出</span><br><span class="line"><span class="built_in">set</span> -eu</span><br><span class="line"><span class="built_in">echo</span> &quot;&lt;--------------------------------------&gt;&quot;</span><br><span class="line">node -v</span><br><span class="line"><span class="built_in">echo</span> &quot;安装依赖&quot;</span><br><span class="line">npm install</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> &quot;&lt;--------------------------------------&gt;&quot;</span><br><span class="line"><span class="built_in">echo</span> &quot;打包出dist文件夹&quot;</span><br><span class="line">npm run build</span><br><span class="line"></span><br><span class="line"># 先删除nginx下的旧数据</span><br><span class="line">sudo rm -rf /www/wwwroot/test-jenks/*</span><br><span class="line"># 再将新数据拷贝到nginx下</span><br><span class="line">sudo cp -r dist/* /www/wwwroot/test-jenks/</span><br></pre></td></tr></table></figure>
+<p>最后执行即可<br><img src="/img/j/22.png"></p>
+]]></content>
+      <tags>
+        <tag>运维</tag>
+        <tag>前端</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2023/08/01/%E5%BE%AE%E4%BF%A1%E6%94%AF%E4%BB%98/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+</search>
